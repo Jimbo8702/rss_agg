@@ -14,10 +14,10 @@ dropdb:
 	docker exec -it postgres12 dropdb rss_agg
 
 dbup: 
-	cd sql/schema && goose postgres "postgresql://root:secret@localhost:5432/rss_agg" up
+	cd sql/schema && goose postgres "postgresql://root:secret@localhost:5432/rss_agg?sslmode=disable" up
 
 dbdown: 
-	cd sql/schema && goose postgres "postgresql://root:secret@localhost:5432/rss_agg" down
+	cd sql/schema && goose postgres "postgresql://root:secret@localhost:5432/rss_agg?sslmode=disable" down
 
 sqlc:
 	sqlc generate

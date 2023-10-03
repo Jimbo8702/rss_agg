@@ -19,30 +19,25 @@ type apiConfig struct {
 
 func main() {
 	godotenv.Load(".env")
-
+	
 	port := os.Getenv("PORT")
 	if port == "" {
 		log.Fatal("PORT not found in environment")
 	}
-
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
 		log.Fatal("DATABASE_URL not found in environment")
 	}
-
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	dbQueries := database.New(db)
-
-	apiConfig := apiConfig{
+	apiCfg := apiConfig{
 		DB: dbQueries,
 	}
 
 	router := chi.NewRouter()
-
 	router.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"https://*", "http://*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -53,9 +48,14 @@ func main() {
 	}))
 
 	v1Router := chi.NewRouter()
+	//user routes
+	v1Router.Post("/users", apiCfg.handlerUsersCreate)
+	v1Router.Get("/users", apiCfg.middlewareAuth(apiCfg.handlerUsersGet))
+	//feed routes
+	v1Router.Post("/feeds", apiCfg.middlewareAuth(apiCfg.handlerFeedCreate))
+	v1Router.Get("/feeds", apiCfg.handlerGetFeeds)
 
-	v1Router.Post("/users", apiConfig.handlerUsersCreate)
-
+	//health checks
 	v1Router.Get("/healthz", handlerReadiness)
 	v1Router.Get("/err", handlerErr)
 
@@ -64,7 +64,6 @@ func main() {
 		Addr: ":" + port,
 		Handler: router,
 	}
-
 	log.Printf("Serving on port: %s\n", port)
 	log.Fatal(srv.ListenAndServe())
 }
